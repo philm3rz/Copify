@@ -13,15 +13,15 @@
     document.querySelector('#playlist').addEventListener('change', (event) => {
         playlistID = `${event.target.value}`;
         getPlaylist(playlistID)
-        .then(playlistObj => {
-            //Display name of playlist
-            document.querySelector('#playlist-data').innerHTML = `Copy this playlist: ${playlistObj.name}`;
+            .then(playlistObj => {
+                //Display name of playlist
+                document.querySelector('#playlist-data').innerHTML = `Copy this playlist: ${playlistObj.name}`;
 
-            //Display button for starting copy process
-            let copy = document.querySelector('#copy')
-            copy.style.display = 'block';
-            copy.addEventListener('click', () => copyPlaylist(playlistObj));
-        })
+                //Display button for starting copy process
+                let copy = document.querySelector('#copy')
+                copy.style.display = 'block';
+                copy.addEventListener('click', () => copyPlaylist(playlistObj));
+            })
 
     });
 
@@ -56,7 +56,7 @@
 
     async function copyPlaylist(playlist) {
         console.log(playlist)
-        
+
         // Get user id
         let response = await fetch(`https://api.spotify.com/v1/me`, {
             headers: {
@@ -79,33 +79,57 @@
                 'name': playlist.name,
                 'public': false
             })
-        })
+        });
         await response.json().then(data => {
             response = data
-        })
-        console.log(response)
+        });
+        console.log(response);
         cpPlaylistID = response.id;
 
-        // TODO: generate list of tracks to add from playlist object following the below scheme
-
-        // Add songs to playlist
-         response = await fetch(`https://api.spotify.com/v1/playlists/${cpPlaylistID}/tracks`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${hash}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                // Placeholder songs REMOVE
-                'uris': ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh","spotify:track:1301WleyT98MSxVHPZCA6M"],
+        // TODO: this only gets 100 tracks, write loop to get ALL tracks even if > 100
+        songsIn100 = [];
+        total = 100;
+        tracksReturned = 0;
+        while (tracksReturned < total) {
+            response = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks?offset=${tracksReturned}&fields=total,items(track(uri))`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${hash}`
+                }
+            });
+            await response.json().then(data => {
+                response = data;
             })
-        })
-        await response.json().then(data => {
-            response = data
-        })
-        console.log(response)
+            total = response.total;
+            tracksReturned += 100;
+            songs = [];
+            for (song in response.items) {
+                songs.push(response.items[song].track.uri);
+            }
+            songsIn100.push(songs);
+        }
 
-       
+        console.log(songsIn100);
+        // Add songs to playlist
+        for (songs in songsIn100) {
+            response = await fetch(`https://api.spotify.com/v1/playlists/${cpPlaylistID}/tracks`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${hash}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    // Placeholder songs REMOVE
+                    'uris': songsIn100[songs],
+                })
+            })
+            await response.json().then(data => {
+                response = data
+            })
+            console.log(response)
+        }
+
+
 
     }
 }())
