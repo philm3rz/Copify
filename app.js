@@ -11,14 +11,15 @@
 
     //Let user enter playlist ID, then get playlist info
     document.querySelector('#playlist').addEventListener('change', (event) => {
+        document.querySelector('#playlist').style.display = 'none';
+
         playlistID = `${event.target.value}`;
         getPlaylist(playlistID)
             .then(playlistObj => {
-                //Display name of playlist
-                document.querySelector('#playlist-data').innerHTML = `Copy this playlist: ${playlistObj.name}`;
 
                 //Display button for starting copy process
                 let copy = document.querySelector('#copy')
+                copy.innerHTML += ` ${playlistObj.name}`;
                 copy.style.display = 'block';
                 copy.addEventListener('click', () => copyPlaylist(playlistObj));
             })
@@ -38,8 +39,9 @@
                 return initial;
             }, {}).access_token;
 
-        //Remove warning if auth was successfull
-        if (hash) document.querySelector('#alert').style.display = 'none';
+        // Proceed in UX if auth was successfull
+        if (hash) document.querySelector('#auth-link').style.display = 'none';
+        if (hash) document.querySelector('#playlist').style.display = 'block';
     }
 
     async function getPlaylist(playlistID) {

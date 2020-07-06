@@ -1,8 +1,21 @@
-#copy {
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-size: 20px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#copy, #playlist {
     display: none;
 }
 
-body {
-    /**debug**/
-    background-color: green;
+html, body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
 }
