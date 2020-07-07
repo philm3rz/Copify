@@ -56,6 +56,7 @@
         return await response;
     }
 
+    // TODO: put api requests in separate function for dryness
     async function copyPlaylist(playlist) {
         console.log(playlist)
 
@@ -88,7 +89,6 @@
         console.log(response);
         cpPlaylistID = response.id;
 
-        // TODO: this only gets 100 tracks, write loop to get ALL tracks even if > 100
         songsIn100 = [];
         total = 100;
         tracksReturned = 0;
@@ -105,13 +105,22 @@
             total = response.total;
             tracksReturned += 100;
             songs = [];
+
+            // Replace with map call
+            // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
             for (song in response.items) {
-                songs.push(response.items[song].track.uri);
+                trackURI = response.items[song].track.uri;
+                if (!trackURI.split(":")[1].includes("local")) {
+                    songs.push(trackURI);
+                    console.log(trackURI);
+                }
             }
             songsIn100.push(songs);
         }
 
         console.log(songsIn100);
+        
+
         // Add songs to playlist
         for (songs in songsIn100) {
             response = await fetch(`https://api.spotify.com/v1/playlists/${cpPlaylistID}/tracks`, {
