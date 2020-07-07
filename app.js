@@ -106,15 +106,8 @@
             tracksReturned += 100;
             songs = [];
 
-            // Replace with map call
-            // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
-            for (song in response.items) {
-                trackURI = response.items[song].track.uri;
-                if (!trackURI.split(":")[1].includes("local")) {
-                    songs.push(trackURI);
-                    console.log(trackURI);
-                }
-            }
+            // Map URIs to new array and filter out local tracks
+            songs = response.items.map(item => item.track.uri).filter(uri => !uri.includes("local"));
             songsIn100.push(songs);
         }
 
