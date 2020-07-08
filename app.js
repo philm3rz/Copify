@@ -3,15 +3,20 @@
     let hash;
     let scope = encodeURIComponent('playlist-modify-private')
 
-    // Set auth link
+    // Set authorization link for obtaining spotify token
     document.querySelector('#auth-link').href = `https://accounts.spotify.com/authorize?response_type=token&client_id=9c334c20058b429b83dd30f49fddc57f&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&show_dialog=true&scope=${scope}`
 
-    // Redirect user for auth if not done yet
+    // Obtain hash from URL parameters if not obtained yet
+    // TODO: display warning if token expires, rn the user has no way of knowing that they have to re-authenticate
     if (!hash) authenticate();
 
     //Let user enter playlist ID, then get playlist info
-    document.querySelector('#playlist').addEventListener('change', (event) => {
-        document.querySelector('#playlist').style.display = 'none';
+
+    playlistInput = document.querySelector('#playlist');
+
+    createTypingEvent();
+
+    playlistInput.addEventListener('stopTyping', (event) => {
 
         playlistID = `${event.target.value}`;
         getPlaylist(playlistID)
@@ -19,8 +24,7 @@
 
                 //Display button for starting copy process
                 let copy = document.querySelector('#copy')
-                copy.innerHTML += ` ${playlistObj.name}`;
-                copy.style.display = 'block';
+                copy.style.display = 'inline-block';
                 copy.addEventListener('click', () => copyPlaylist(playlistObj));
             })
 
@@ -41,7 +45,7 @@
 
         // Proceed in UX if auth was successfull
         if (hash) document.querySelector('#auth-link').style.display = 'none';
-        if (hash) document.querySelector('#playlist').style.display = 'block';
+        if (hash) document.querySelector('#input-container').style.display = 'block';
     }
 
     async function getPlaylist(playlistID) {
@@ -112,7 +116,7 @@
         }
 
         console.log(songsIn100);
-        
+
 
         // Add songs to playlist
         for (songs in songsIn100) {
@@ -136,4 +140,20 @@
 
 
     }
+
+    // Captures when the user stops typing, and dispatches the stopTyping event after 3 seconds
+    function createTypingEvent() {
+        const stopTypingEvent = new Event('stopTyping');
+
+        playlistInput.addEventListener('keypress', (event) => {
+            window.clearTimeout(timer);
+        });
+        playlistInput.addEventListener('keyup', (event) => {
+            if (timer) window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                playlistInput.dispatchEvent(stopTypingEvent);
+            }, 3000);
+        });
+    }
+
 }())
