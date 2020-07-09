@@ -144,14 +144,15 @@
     // Captures when the user stops typing, and dispatches the stopTyping event after 3 seconds
     function createTypingEvent() {
         const stopTypingEvent = new Event('stopTyping');
+        let timer;
 
         playlistInput.addEventListener('keypress', (event) => {
-            window.clearTimeout(timer);
+            if (!timer) window.clearTimeout(timer);
         });
         playlistInput.addEventListener('keyup', (event) => {
             if (timer) window.clearTimeout(timer);
             timer = window.setTimeout(() => {
-                playlistInput.dispatchEvent(stopTypingEvent);
+                if (event.target.value.length == 22) playlistInput.dispatchEvent(stopTypingEvent);
             }, 3000);
         });
     }
