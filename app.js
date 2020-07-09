@@ -10,8 +10,7 @@
     // TODO: display warning if token expires, rn the user has no way of knowing that they have to re-authenticate
     if (!hash) authenticate();
 
-    //Let user enter playlist ID, then get playlist info
-
+    //Let user enter playlist ID, then get playlist info and display in card
     playlistInput = document.querySelector('#playlist');
 
     createTypingEvent();
@@ -21,10 +20,11 @@
         playlistID = `${event.target.value}`;
         getPlaylist(playlistID)
             .then(playlistObj => {
-
+                // Display embedded playlist to tell user that ID is valid
+                document.querySelector("#embed").src = `https://open.spotify.com/embed/playlist/${playlistID}` 
                 //Display button for starting copy process
                 let copy = document.querySelector('#copy')
-                copy.style.display = 'inline-block';
+                copy.disabled = false;
                 copy.addEventListener('click', () => copyPlaylist(playlistObj));
             })
 
@@ -45,7 +45,7 @@
 
         // Proceed in UX if auth was successfull
         if (hash) document.querySelector('#auth-link').style.display = 'none';
-        if (hash) document.querySelector('#input-container').style.display = 'block';
+        if (hash) document.querySelector('#outer').style.display = 'block';
     }
 
     async function getPlaylist(playlistID) {
@@ -153,7 +153,7 @@
             if (timer) window.clearTimeout(timer);
             timer = window.setTimeout(() => {
                 if (event.target.value.length == 22) playlistInput.dispatchEvent(stopTypingEvent);
-            }, 3000);
+            }, 1000);
         });
     }
 

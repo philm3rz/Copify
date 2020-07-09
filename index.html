@@ -9,9 +9,13 @@
 
 <body>
     <a id='auth-link'>First, log in with the spotify account you want to copy your playlist to</a>
-    <div id="input-container">
-        <input id='playlist' type="text" placeholder="Playlist URL">
-        <button id="copy">Copy</button>
+    <div id="outer">
+        <div id="input-container">
+            <input id='playlist' type="text" placeholder="Playlist URL">
+            <button id="copy" disabled>Copy</button>
+        </div>
+        <iframe id="embed" src="" width="300" height="380" frameborder="0" allowtransparency="true"
+            allow="encrypted-media"></iframe>
     </div>
     <script src='app.js'></script>
 </body>

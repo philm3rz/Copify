@@ -6,7 +6,7 @@
     font-family: 'Montserrat', sans-serif;
 }
 
-#input-container, #copy {
+#outer {
     display: none;
 }
 
