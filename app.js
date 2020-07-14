@@ -59,7 +59,7 @@
         const userID = response.id;
 
         // Create playlist with name
-        response = spotifyRequest(`https://api.spotify.com/v1/users/${userID}/playlists`, {
+        response = await spotifyRequest(`https://api.spotify.com/v1/users/${userID}/playlists`, {
             'name': playlist.name,
             'public': false
         });
@@ -118,7 +118,8 @@
         // Do actual request
         return fetch(endpoint, params)
             .then((r) => {
-                if (r.status == 200) return r.json();
+                console.log(r.status)
+                if (r.status == 200 || r.status == 201) return r.json();
                 else return "";
             })
     }
