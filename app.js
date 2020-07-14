@@ -4,10 +4,9 @@
     let scope = encodeURIComponent('playlist-modify-private')
 
     // Set authorization link for obtaining spotify token
-    document.querySelector('#auth-link').href = `https://accounts.spotify.com/authorize?response_type=token&client_id=9c334c20058b429b83dd30f49fddc57f&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&show_dialog=true&scope=${scope}`
+    document.querySelector('#auth-link').href = `https://accounts.spotify.com/authorize?response_type=token&client_id=9c334c20058b429b83dd30f49fddc57f&redirect_uri=https%3A%2F%2Fphilm3rz.github.io%2FCopify%2F&show_dialog=true&scope=${scope}`
 
     // Obtain hash from URL parameters if not obtained yet
-    // TODO: display warning if token expires, rn the user has no way of knowing that they have to re-authenticate
     if (!hash) authenticate();
 
     //Let user enter playlist ID, then get playlist info and display in card
@@ -21,9 +20,10 @@
         getPlaylist(playlistID)
             .then(playlistObj => {
                 // Display embedded playlist to tell user that ID is valid
-                document.querySelector("#embed").src = `https://open.spotify.com/embed/playlist/${playlistID}` 
+                document.querySelector("#embed").src = `https://open.spotify.com/embed/playlist/${playlistID}`;
+                document.querySelector("#embed").style.display = 'block';
                 //Display button for starting copy process
-                let copy = document.querySelector('#copy')
+                let copy = document.querySelector('#copy');
                 copy.disabled = false;
                 copy.addEventListener('click', () => copyPlaylist(playlistObj));
             })
@@ -49,96 +49,78 @@
     }
 
     async function getPlaylist(playlistID) {
-        let response = await fetch(`${ENDPOINT}${playlistID}`, {
-            headers: {
-                'Authorization': 'Bearer ' + hash
-            }
-        });
-        await response.json().then(data => {
-            response = data;
-        })
-        return await response;
+        return spotifyRequest(`${ENDPOINT}${playlistID}`);
     }
 
-    // TODO: put api requests in separate function for dryness
     async function copyPlaylist(playlist) {
-        console.log(playlist)
 
         // Get user id
-        let response = await fetch(`https://api.spotify.com/v1/me`, {
-            headers: {
-                'Authorization': `Bearer ${hash}`
-            }
-        });
-        await response.json().then(data => {
-            response = data
-        })
+        let response = await spotifyRequest(`https://api.spotify.com/v1/me`);
         const userID = response.id;
 
         // Create playlist with name
-        response = await fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${hash}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'name': playlist.name,
-                'public': false
-            })
+        response = spotifyRequest(`https://api.spotify.com/v1/users/${userID}/playlists`, {
+            'name': playlist.name,
+            'public': false
         });
-        await response.json().then(data => {
-            response = data
-        });
-        console.log(response);
         cpPlaylistID = response.id;
 
         songsIn100 = [];
         total = 100;
         tracksReturned = 0;
-        while (tracksReturned < total) {
-            response = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks?offset=${tracksReturned}&fields=total,items(track(uri))`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${hash}`
-                }
-            });
-            await response.json().then(data => {
-                response = data;
-            })
-            total = response.total;
-            tracksReturned += 100;
-            songs = [];
-
-            // Map URIs to new array and filter out local tracks
-            songs = response.items.map(item => item.track.uri).filter(uri => !uri.includes("local"));
-            songsIn100.push(songs);
+        let working = true;
+        while (tracksReturned < total && working) {
+            response = await spotifyRequest(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks?offset=${tracksReturned}&fields=total,items(track(uri))`)
+            if (response !== "") {
+                console.log(response)
+                total = response.total;
+                tracksReturned += 100;
+                songs = [];
+                // Map URIs to new array and filter out local tracks
+                songs = response.items.map(item => item.track.uri).filter(uri => !uri.includes("local"));
+                songsIn100.push(songs);
+            } else working = false;
         }
 
-        console.log(songsIn100);
+        if (working) {
+            document.querySelector('#error-msg').style.display = 'block';
+            document.querySelector('#error-msg').innerHTML = 'Your playlist is copied';
 
+            console.log(songsIn100);
 
-        // Add songs to playlist
-        for (songs in songsIn100) {
-            response = await fetch(`https://api.spotify.com/v1/playlists/${cpPlaylistID}/tracks`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${hash}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    // Placeholder songs REMOVE
+            // Add songs to playlist
+            for (songs in songsIn100) {
+                spotifyRequest(`https://api.spotify.com/v1/playlists/${cpPlaylistID}/tracks`, {
                     'uris': songsIn100[songs],
-                })
-            })
-            await response.json().then(data => {
-                response = data
-            })
-            console.log(response)
+                });
+
+            }
+        }
+    }
+
+    function spotifyRequest(endpoint, body) {
+        // Define header & request params 
+        params = {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${hash}`,
+                'Content-Type': 'application/json'
+            }
         }
 
+        if (body !== undefined) {
+            params.method = 'POST',
+                params.body = JSON.stringify(body)
+        }
 
+        console.log(`Endpoint: ${endpoint}\nParams:${params}`);
 
+        // Do actual request
+        return fetch(endpoint, params)
+            .then((r) => {
+                if (r.status == 200) return r.json();
+                else return "";
+            })
     }
 
     // Captures when the user stops typing, and dispatches the stopTyping event after 3 seconds
