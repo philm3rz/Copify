@@ -3,7 +3,7 @@
     let hash;
     let scope = encodeURIComponent('playlist-modify-private')
 
-    // Set authorization link for obtaining spotify token
+    //Set authorization link for obtaining spotify token
     document.querySelector('#auth-link').href = `https://accounts.spotify.com/authorize?response_type=token&client_id=9c334c20058b429b83dd30f49fddc57f&redirect_uri=https%3A%2F%2Fphilm3rz.github.io%2FCopify%2F&show_dialog=true&scope=${scope}`
 
     // Obtain hash from URL parameters if not obtained yet
